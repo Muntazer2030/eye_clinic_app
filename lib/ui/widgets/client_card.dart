@@ -21,7 +21,7 @@ class ClientCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.03),
+                color: Colors.black.withValues(alpha: 0.03),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -32,7 +32,7 @@ class ClientCard extends StatelessWidget {
             child: InkWell(
               borderRadius: BorderRadius.circular(16),
               onTap: () {}, // Handle click
-              hoverColor: Theme.of(context).colorScheme.primary.withOpacity(0.05),
+              hoverColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
               child: Padding(
                 padding: const EdgeInsets.all(20),
                 child: Row(
@@ -42,7 +42,7 @@ class ClientCard extends StatelessWidget {
                       width: 50,
                       height: 50,
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Center(
@@ -74,7 +74,7 @@ class ClientCard extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
-                              color: Colors.blue.withOpacity(0.1),
+                              color: Colors.blue.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(

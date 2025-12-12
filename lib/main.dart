@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF00897B), // Medical Teal
+          seedColor: const Color(0xFF07579a), // Medical Teal
           surface: const Color(0xFFF4F7FA), // Soft Blue-Grey Background
         ),
         fontFamily: 'Segoe UI', // Native Windows Font

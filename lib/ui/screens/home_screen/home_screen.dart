@@ -1,5 +1,9 @@
 import 'package:eye_clinic/models/client.dart';
-import 'package:eye_clinic/ui/widgets/client_card.dart';
+import 'package:eye_clinic/services/json_db_service.dart';
+import 'package:eye_clinic/ui/screens/pages/adding_clinet_page.dart';
+import 'package:eye_clinic/ui/screens/pages/clinets_page.dart';
+import 'package:eye_clinic/ui/screens/pages/settings_page.dart';
+import 'package:eye_clinic/ui/widgets/nav_tile.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -10,112 +14,61 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // 2. Dummy Data
-  final List<Client> _allClients = [
-    Client(
-      id: '1',
-      name: 'محمد علي',
-      phone: '07701234567',
-      lastVisit: "2025-12-10",
-      lensesType: "عدسات لاصقة",
-      age: 26,
-    ),
-    Client(
-      id: '2',
-      name: 'Zahra Ahmed',
-      phone: '07809876543',
-      lastVisit: "2025-12-10",
-      lensesType: 'عدسات فلتر بلوكات مخصصة للاجهزة الاكلترونية',
-      age: 26,
-    ),
-    Client(
-      id: '3',
-      name: 'يوسف كريم',
-      phone: '07505551234',
-      lastVisit: "2025-12-10",
-      lensesType: 'بايفوكل مع فاصل',
-      age: 26,
-    ),
-    Client(
-      id: '4',
-      name: 'Fatima Omar',
-      phone: '07712223333',
-      lastVisit: "2025-12-10",
-      lensesType: 'عدسات فوتوكري بلوكات',
-      age: 26,
-    ),
-    Client(
-      id: '4',
-      name: 'Fatima Omar',
-      phone: '07712223333',
-      lastVisit: "2025-12-10",
-      lensesType: 'عدسات فوتوكري بلوكات',
-      age: 26,
-    ),
-    Client(
-      id: '2',
-      name: 'Zahra Ahmed',
-      phone: '07809876543',
-      lastVisit: "2025-12-10",
-      lensesType: 'عدسات فلتر بلوكات مخصصة للاجهزة الاكلترونية',
-      age: 26,
-    ),
-    Client(
-      id: '3',
-      name: 'يوسف كريم',
-      phone: '07505551234',
-      lastVisit: "2025-12-10",
-      lensesType: 'بايفوكل مع فاصل',
-      age: 26,
-    ),
-    Client(
-      id: '4',
-      name: 'Fatima Omar',
-      phone: '07712223333',
-      lastVisit: "2025-12-10",
-      lensesType: 'عدسات فوتوكري بلوكات',
-      age: 26,
-    ),
-    Client(
-      id: '4',
-      name: 'Fatima Omar',
-      phone: '07712223333',
-      lastVisit: "2025-12-10",
-      lensesType: 'عدسات فوتوكري بلوكات',
-      age: 26,
-    ),
-  ];
+  JsonDbService dbService = JsonDbService();
 
-  List<Client> _filteredClients = [];
-  final TextEditingController _searchController = TextEditingController();
+  int selected = 0;
+
+  // 2. Dummy Data
+  List<Client> allClients = [];
+  List<String> lensesTypes = [];
+  Future<void> initializeDb() async {
+    await dbService.init();
+
+    // Try to read the 'clients' key from the file
+    var data =await dbService.read('clients');
+    var lensesData =await dbService.read('lenses_types');
+    if (data != null) {
+      List<dynamic> jsonList = data;
+      allClients = jsonList.map((json) => Client.fromJson(json)).toList();
+      setState(() {
+        allClients = allClients;
+      });
+    }
+    if (lensesData != null) {
+      setState(() {
+        lensesTypes = List<String>.from(lensesData);
+      });
+    }
+  }
+   void _handleAddedClient() {
+     ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("تمت إضافة المراجع بنجاح", style: TextStyle(fontFamily: 'Arial')),
+          backgroundColor: Colors.green,
+        ),
+      );
+  }
+  /// Helper to save the current list to the DB
+  Future<void> _saveClientsToDb() async {
+    // Convert List<Client> -> List<Map>
+    List<Map<String, dynamic>> jsonList = allClients
+        .map((c) => c.toJson())
+        .toList();
+
+    // Write to file
+    await dbService.write('clients', jsonList);
+  }
+
+  Future<void> _saveLensesTypesToDb() async {
+    await dbService.write('lenses_types', lensesTypes);
+  }
 
   @override
   void initState() {
+    initializeDb();
     super.initState();
-    _filteredClients = _allClients;
+    
   }
-
-  void _runFilter(String enteredKeyword) {
-    List<Client> results = [];
-    if (enteredKeyword.isEmpty) {
-      results = _allClients;
-    } else {
-      results = _allClients
-          .where(
-            (client) =>
-                client.name.toLowerCase().contains(
-                  enteredKeyword.toLowerCase(),
-                ) ||
-                client.phone.contains(enteredKeyword),
-          )
-          .toList();
-    }
-
-    setState(() {
-      _filteredClients = results;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -145,17 +98,19 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             // --- HEADER SECTION ---
                             const SizedBox(height: 30),
-                            Icon(
-                              Icons.remove_red_eye_rounded,
-                              size: isWideScreen ? 60 : 40,
-                              color: Theme.of(context).colorScheme.primary,
+                            Image.asset(
+                              'assets/images/logo.png', // your image path
+                              width: isWideScreen ? 140 : 70,
+                              height: isWideScreen ? 140 : 70,
+                              fit: BoxFit.contain,
                             ),
+
                             const SizedBox(height: 10),
                             if (isWideScreen)
                               const Text(
-                                "Clarity Vision",
+                                "عوينات الفائز",
                                 style: TextStyle(
-                                  fontSize: 20,
+                                  fontSize: 22,
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 1.2,
                                 ),
@@ -171,281 +126,106 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: SingleChildScrollView(
                                 child: Column(
                                   children: [
-                                    _NavTile(
+                                    NavTile(
                                       icon: Icons.people_outline_rounded,
                                       title: "المراجعين",
-                                      isActive: true,
+                                      isActive: selected == 0,
                                       isCompact: !isWideScreen,
+                                      onTap: () {
+                                        setState(() {
+                                          selected = 0;
+                                        });
+                                      },
                                     ),
-                                    _NavTile(
+                                    NavTile(
                                       icon: Icons.group_add_outlined,
                                       title: "اضافة مراجع",
-                                      isActive: false,
+                                      isActive: selected == 1,
                                       isCompact: !isWideScreen,
+                                      onTap: () {
+                                        setState(() {
+                                          selected = 1;
+                                        });
+                                      },
                                     ),
-                                    _NavTile(
+                                    NavTile(
                                       icon: Icons.settings_outlined,
                                       title: "الاعدادات",
-                                      isActive: false,
+                                      isActive: selected == 2,
                                       isCompact: !isWideScreen,
+                                      onTap: () {
+                                        setState(() {
+                                          selected = 2;
+                                        });
+                                      },
                                     ),
                                   ],
                                 ),
                               ),
                             ),
-
-                            // --- FOOTER SECTION (Always at bottom) ---
-                            const Divider(),
-                            if (isWideScreen)
-                              const ListTile(
-                                leading: CircleAvatar(
-                                  backgroundColor: Colors.grey,
-                                  radius: 15,
-                                ),
-                                title: Text(
-                                  "Dr. Al-Doctor",
-                                  style: TextStyle(fontSize: 14),
-                                ),
-                                subtitle: Text(
-                                  "Ophthalmologist",
-                                  style: TextStyle(fontSize: 12),
-                                ),
-                              )
-                            else
-                              const Padding(
-                                padding: EdgeInsets.only(bottom: 20),
-                                child: CircleAvatar(
-                                  backgroundColor: Colors.grey,
-                                  radius: 15,
-                                ),
-                              ),
-                            const SizedBox(height: 20),
                           ],
                         ),
                       ),
-                      // 4. Main Content Area
-                      Expanded(
-                        child: Column(
-                          children: [
-                            // Top Header
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 30,
-                                vertical: 30,
-                              ),
-                              color: Colors.white,
-                              child: Row(
-                                children: [
-                                  // 1. Wrap the text Column in Expanded so it allows shrinking
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          "المراجعين",
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .headlineMedium
-                                              ?.copyWith(
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.black87,
-                                              ),
-                                          // 2. Add these lines to handle text shrinking/overflow
-                                          overflow: TextOverflow.ellipsis,
-                                          maxLines: 1,
-                                        ),
-                                        const SizedBox(height: 5),
 
-                                        // Hide subtitle on very small screens
-                                        if (isWideScreen)
-                                          Text(
-                                            "العدد الكلي للمراجعين ${_allClients.length}",
-                                            style: TextStyle(
-                                              color: Colors.grey[600],
-                                              fontSize: 16,
-                                            ),
-                                            // 2. Add these lines to handle text shrinking/overflow
-                                            overflow: TextOverflow.ellipsis,
-                                            maxLines: 1,
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-
-                                  // Responsive Spacer or fixed gap
-                                  if (isWideScreen)
-                                    const Spacer()
-                                  else
-                                    const SizedBox(width: 10),
-
-                                  // Flexible Search Bar
-                                  Expanded(
-                                    flex: isWideScreen
-                                        ? 0
-                                        : 2, // Increased flex to 2 on small screens to give search bar more room
-                                    child: Container(
-                                      constraints: const BoxConstraints(
-                                        maxWidth: 420,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey[100],
-                                        borderRadius: BorderRadius.circular(15),
-                                        border: Border.all(
-                                          color: Colors.grey.shade300,
-                                        ),
-                                      ),
-                                      child: TextField(
-                                        controller: _searchController,
-                                        onChanged: _runFilter,
-                                        decoration: InputDecoration(
-                                          hintText: isWideScreen
-                                              ? "ابحث عن المراجعين ..."
-                                              : "بحث...",
-                                          prefixIcon: const Icon(
-                                            Icons.search,
-                                            color: Colors.grey,
-                                          ),
-                                          border: InputBorder.none,
-                                          contentPadding:
-                                              const EdgeInsets.symmetric(
-                                                vertical: 15,
-                                              ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 20),
-
-                                  // Button (Icon only on small screens)
-                                  ElevatedButton.icon(
-                                    onPressed: () {},
-                                    icon: const Icon(
-                                      Icons.add,
-                                      color: Colors.white,
-                                    ),
-                                    label: isWideScreen
-                                        ? const Text(
-                                            "اضافة مراجع",
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                            ),
-                                          )
-                                        : const SizedBox.shrink(), // Hide text on small screens
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Theme.of(
-                                        context,
-                                      ).colorScheme.primary,
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: isMediumScreen ? 20 : 10,
-                                        vertical: 18,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            // The List
-                            Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.all(30),
-                                child: _filteredClients.isEmpty
-                                    ? Center(
-                                        child: Text(
-                                          "لا يوجد مراجعين",
-                                          style: TextStyle(
-                                            color: Colors.grey[500],
-                                            fontSize: 18,
-                                          ),
-                                        ),
-                                      )
-                                    : ListView.separated(
-                                        itemCount: _filteredClients.length,
-                                        separatorBuilder: (ctx, index) =>
-                                            const SizedBox(height: 15),
-                                        itemBuilder: (ctx, index) {
-                                          return ClientCard(
-                                            client: _filteredClients[index],
-                                          );
-                                        },
-                                      ),
-                              ),
-                            ),
-                          ],
-                        ),
+                      Builder(
+                        builder: (context) {
+                          if (selected == 0) {
+                            return ClinetsPage(
+                              isWideScreen: isWideScreen,
+                              isMediumScreen: isMediumScreen,
+                              allClients: allClients.reversed.toList(),
+                              onAddClient: () {
+                                setState(() {
+                                  selected = 1;
+                                });
+                              },
+                            );
+                          } else if (selected == 1) {
+                            return AddingClinetPage(
+                              isWideScreen: isWideScreen,
+                              isMediumScreen: isMediumScreen,
+                              allClients: allClients,
+                              lensesTypes: lensesTypes,
+                              onAddClient: (client) {
+                                setState(() {
+                                  selected = 0;
+                                  allClients.add(client);
+                                });
+                                _saveClientsToDb();
+                                _handleAddedClient();
+                              },
+                            );
+                          } else {
+                            return SettingsPage(
+                              isWideScreen: isWideScreen,
+                              isMediumScreen: isMediumScreen,
+                              onAddLensType: (lensType) {
+                                setState(() {
+                                  lensesTypes.add(lensType);
+                                });
+                                _saveLensesTypesToDb();
+                              },
+                              onDeleteAllData: () {
+                                setState(() {
+                                  allClients.clear();
+                                  lensesTypes.clear();
+                                });
+                                dbService.clear();
+                              },
+                              onDeleteLensType: (lensType) {
+                                setState(() {
+                                  lensesTypes.remove(lensType);
+                                });
+                              },
+                              currentLensTypes: lensesTypes,
+                            );
+                          }
+                        },
                       ),
                     ],
                   ),
                 );
         },
-      ),
-    );
-  }
-}
-
-// Updated NavTile to handle Compact Mode
-class _NavTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final bool isActive;
-  final bool isCompact; // New parameter
-
-  const _NavTile({
-    required this.icon,
-    required this.title,
-    required this.isActive,
-    required this.isCompact,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // If sidebar is collapsed (compact), show a centered icon only
-    if (isCompact) {
-      return Container(
-        margin: const EdgeInsets.symmetric(vertical: 10),
-        child: IconButton(
-          onPressed: () {},
-          icon: Icon(
-            icon,
-            color: isActive
-                ? Theme.of(context).colorScheme.primary
-                : Colors.grey[500],
-          ),
-          tooltip: title, // Show text on hover
-        ),
-      );
-    }
-
-    // Normal full width tile
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      decoration: isActive
-          ? BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
-            )
-          : null,
-      child: ListTile(
-        leading: Icon(
-          icon,
-          color: isActive
-              ? Theme.of(context).colorScheme.primary
-              : Colors.grey[500],
-        ),
-        title: Text(
-          title,
-          style: TextStyle(
-            color: isActive
-                ? Theme.of(context).colorScheme.primary
-                : Colors.grey[600],
-            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-        onTap: () {},
       ),
     );
   }
