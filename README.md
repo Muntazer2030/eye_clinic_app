@@ -12,6 +12,28 @@ internet, no account, no database server.
 
 ---
 
+## Screenshots
+
+*All screenshots use made-up sample data and a placeholder logo.*
+
+**Customer list** with search:
+
+![Customer list](docs/screenshots/customers-list.png)
+
+**Customer details**: edit the record and the eye prescription (distance and near, right and left eye):
+
+![Customer details](docs/screenshots/customer-details.png)
+
+**Add a customer**:
+
+![Add a customer](docs/screenshots/add-customer.png)
+
+**Settings**: manage lens types or delete all data:
+
+![Settings](docs/screenshots/settings.png)
+
+---
+
 ## Features
 
 - **Customer list** with a live search box and a card for each customer (name, phone, last visit, lens type).
